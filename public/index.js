@@ -1,5 +1,5 @@
 const express = require('express');
-  morgan = require('morgan');
+const morgan = require('morgan');
 
 const app = express();
 
@@ -34,6 +34,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Oops! Something went wrong!');
 });
 
-app.listen(8080, () => {
-  console.log('Your app is listening on port 8080.');
+app.listen(3000, () => {
+  console.log('Your app is listening on port 3000.');
 });
