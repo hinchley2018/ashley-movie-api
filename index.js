@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 
 app.use(morgan('common'));
-
+app.use(express.json());
 app.use(express.static('public'));
 
 let topMovies = [
@@ -119,7 +119,7 @@ app.post('/movies', (req, res) => {
 };
 
   if (!newMovie.title || !newMovie.director) {
-res.status(400).send('Opps! Missing required fields: title or director');
+    res.status(400).send('Opps! Missing required fields: title or director');
   } else {
     topMovies.push(newMovie);
     res.status(201).json(newMovie);
@@ -143,7 +143,7 @@ app.put('/movies/:title/:genre', (req, res) => {
   const movie = topMovies.find((movie) => movie.title === req.params.title);
 
   if (movie) {
-    movie.genre - req.body.grene;
+    movie.genre = req.body.genre;
     res.status(200).json(movie);
   } else {
     res.status(404).send('Oops! Movie not found!');
