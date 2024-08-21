@@ -11,83 +11,83 @@ app.use(express.static('public'));
 let topMovies = [
   { 
     id: uuidv4(),
-    title: 'The Texas Chainsaw Massacre', 
-    director: 'Tobe Hooper', 
-    description: 'A group of friends fall victim to a family of cannibals.',
-    genre: 'Horror', 
-    imageUrl: 'https://placeholder.com/texas-chainsaw.jpg'
+    title: 'Inception', 
+    director: 'Christopher Nolan', 
+    description: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+    genre: 'Sci-Fi', 
+    imageUrl: 'https://placeholder.com/inception.jpg'
   },
   { 
     id: uuidv4(),
-    title: 'A Nightmare on Elm Street', 
-    director: 'Wes Craven',
-    description: 'A teenager is haunded by a disfigured killer in her dreams.', 
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/nighmare-elm.jpg' 
+    title: 'Interstellar', 
+    director: 'Christopher Nolan',
+    description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.', 
+    genre: 'Sci-Fi',
+    imageUrl: 'https://placeholder.com/interstellar.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'The Fog', 
-    director: 'John Carpenter',
-    description: 'A small coastal town is enveloped by a thick fog that brings vengeful spirits.',
-    genre: 'Horror', 
-    imageUrl: 'https://placeholder.com/the-fog.jpg' 
+    title: 'Pulp Fiction', 
+    director: 'Quentin Tarantino',
+    description: 'The lives of two mob hitmen, a boxer, a gangster, and his wife intertwine in four tales of violence and redemption.',
+    genre: 'Crime', 
+    imageUrl: 'https://placeholder.com/pulp-fiction.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'Deep Red', 
-    director: 'Dario Argento',
-    description: 'A jazz pianist and a journalist work together to solve a series of murders in Rome.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/deep-red.jpg' 
+    title: 'Django Unchained', 
+    director: 'Quentin Tarantino',
+    description: 'With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.',
+    genre: 'Western',
+    imageUrl: 'https://placeholder.com/django-unchained.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'The Fly', 
-    director: 'David Cronenberg',
-    description: 'A scientist’s experiment goes horribly wrong, turning him into a human-fly hybrid.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/the-fly.jpg'
+    title: 'The Grand Budapest Hotel', 
+    director: 'Wes Anderson',
+    description: 'A writer encounters the owner of an aging high-class hotel, who tells him of his early years serving as a lobby boy in the hotel\'s glorious years under an exceptional concierge.',
+    genre: 'Comedy',
+    imageUrl: 'https://placeholder.com/grand-budapest.jpg'
   },
   { 
     id: uuidv4(),
-    title: 'Ju-on: The Grudge', 
-    director: 'Takashi Shimizu',
-    description: 'A curse that plagues a house haunts anyone who dares enter.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/the-grudge.jpg' 
+    title: 'The Royal Tenenbaums', 
+    director: 'Wes Anderson',
+    description: 'The eccentric members of a dysfunctional family reluctantly gather under the same roof for various reasons.',
+    genre: 'Comedy',
+    imageUrl: 'https://placeholder.com/royal-tenenbaums.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'A Bay of Blood', 
-    director: 'Mario Bava',
-    description: 'A series of murders ensue over the ownership of a coveted bay.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/bay-of-blood.jpg'
+    title: 'Fight Club', 
+    director: 'David Fincher',
+    description: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.',
+    genre: 'Drama',
+    imageUrl: 'https://placeholder.com/fight-club.jpg'
   },
   { 
     id: uuidv4(),
-    title: 'Re-Animator',  
-    director: 'Stuart Gordon',
-    description: 'A medical student and his mentor develop a serum to reanimate the dead.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/reanimator.jpg' 
+    title: 'Gone Girl',  
+    director: 'David Fincher',
+    description: 'With his wife\'s disappearance having become the focus of an intense media circus, a man sees the spotlight turned on him when it\'s suspected that he may not be innocent.',
+    genre: 'Thriller',
+    imageUrl: 'https://placeholder.com/gone-girl.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'Psycho', 
-    director: 'Alfred Hitchcock',
-    description: 'A woman steals a fortune and checks into a secluded motel run by a disturbed man.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/psycho.jpg' 
+    title: 'The Godfather', 
+    director: 'Francis Ford Coppola',
+    description: 'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
+    genre: 'Crime',
+    imageUrl: 'https://placeholder.com/the-godfather.jpg' 
   },
   { 
     id: uuidv4(),
-    title: 'Terrifier', 
-    director: 'Damien Leone',
-    description: 'A maniacal clown terrorizes three women on Halloween night.',
-    genre: 'Horror',
-    imageUrl: 'https://placeholder.com/terrifier.jpg' 
+    title: 'Apocalypse Now', 
+    director: 'Francis Ford Coppola',
+    description: 'A U.S. Army officer serving in Vietnam is tasked with assassinating a renegade Special Forces Colonel who sees himself as a god.',
+    genre: 'War',
+    imageUrl: 'https://placeholder.com/apocalypse-now.jpg' 
   },
 ];
 
