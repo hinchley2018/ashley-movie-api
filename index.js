@@ -1,7 +1,10 @@
+const mongoose = require('mongoose');
+const Models = require('./models.js');
 const express = require('express');
 const morgan = require('morgan');
-const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const Movie = Models.Movie;
+const User = Models.User;
 
 const app = express();
 
@@ -93,19 +96,47 @@ let topMovies = [
 ];
 
 // GET all movies
-app.get('/movies', (req, res) => {
-  res.json(topMovies);
-
+app.get('/movies', async (req, res) => {
+  try {
+    const movies = await Movie.find();
+    res.status(200).json(movies);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
 });
 
 // GET data about a single movie by title
-app.get('/movies/:title', (req,res) => {
-  const movie = topMovies.find((movie) => movie.title ===req.params.title);
+app.get('/movies/:title', async (req, res) => {
+  try {
+    const movie = await Movie.findOne({ title: req.params.title });
+    if (!movie) return res.status(404).send('Movie not found');
+    res.status(200).json(movie);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
 
-  if (movie) {
-    res.json(movie);
-  } else {
-    res.status(404).send('Oops! Movie not found!');
+// GET data about a genre
+app.get('/genres/:name', async (req, res) => {
+  try {
+    // Assuming you need to get all movies with this genre
+    const movies = await Movie.find({ genre: req.params.name });
+    if (!movies.length) return res.status(404).send('Genre not found');
+    res.status(200).json({ genre: req.params.name, movies });
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
+// GET data about a director
+app.get('/directors/:name', async (req, res) => {
+  try {
+    // Assuming you need to get all movies by this director
+    const movies = await Movie.find({ director: req.params.name });
+    if (!movies.length) return res.status(404).send('Director not found');
+    res.status(200).json({ director: req.params.name, movies });
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
   }
 });
 
@@ -127,42 +158,109 @@ app.post('/movies', (req, res) => {
   }
 });
 
+// POST new Users
+app.post('/users', async (req, res) => {
+  try {
+    const newUser = new User(req.body);
+    const savedUser = await newUser.save();
+    res.status(201).json(savedUser);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
+// POST users favorite movies
+app.post('/users/:id/favorites/:movieId', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $push: { favoriteMovies: req.params.movieId } },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
 // DELETE a movie by title
-app.delete('/movies/:title', (req, res) => {
-  const movieIndex = topMovies.findIndex((movie) => movie.title === req.params.title);
-  
-  if (movieIndex !== -1) {
-    topMovies.splice(movieIndex, 1);
+app.delete('/movies/:title', async (req, res) => {
+  try {
+    const deletedMovie = await Movie.findOneAndRemove({ title: req.params.title });
+    if (!deletedMovie) return res.status(404).send('Movie not found');
     res.status(200).send(`Movie titled "${req.params.title}" was deleted.`);
-  } else {
-    res.status(404).send('Oops! Movie not found!');
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
+// DELETE favorite movie
+app.delete('/users/:id/favorites/:movieId', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { favoriteMovies: req.params.movieId } },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
+// DELETE Users
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndRemove(req.params.id);
+    if (!user) return res.status(404).send('User not found');
+    res.status(200).send('User was successfully deregistered');
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
   }
 });
 
 // PUT (Update) the genre of a movie by title
-app.put('/movies/:title/:genre', (req, res) => {
-  const movie = topMovies.find((movie) => movie.title === req.params.title);
-
-  if (movie) {
-    movie.genre = req.body.genre;
-    res.status(200).json(movie);
-  } else {
-    res.status(404).send('Oops! Movie not found!');
+app.put('/movies/:title/genre', async (req, res) => {
+  try {
+    const updatedMovie = await Movie.findOneAndUpdate(
+      { title: req.params.title },
+      { genre: req.body.genre },
+      { new: true }
+    );
+    if (!updatedMovie) return res.status(404).send('Movie not found');
+    res.status(200).json(updatedMovie);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
   }
 });
 
 // PUT (Update) the director of a movie by title
-app.put('/movies/:title/director', (req, res) => {
-  const movie = topMovies.find((movie) => movie.title === req.params.title);
-  
-  if (movie) {
-    movie.director = req.body.director;
-    res.status(200).json(movie);
-  } else {
-    res.status(404).send('Movie not found');
+app.put('/movies/:title/director', async (req, res) => {
+  try {
+    const updatedMovie = await Movie.findOneAndUpdate(
+      { title: req.params.title },
+      { director: req.body.director },
+      { new: true }
+    );
+    if (!updatedMovie) return res.status(404).send('Movie not found');
+    res.status(200).json(updatedMovie);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
   }
 });
 
-app.listen(3000, () => {
-  console.log('Your app is listening on port 3000.');
+// PUT users ID
+app.put('/users/:id', async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
 });
+
+app.listen(8080, () => {
+  console.log('Your app is listening on port 8080.');
+});
+
+mongoose.connect('mongodb://localhost:27017/cfDB', { useNewUrlParser: true, useUnifiedTopology: true });
