@@ -11,7 +11,7 @@ let movieSchema = mongoose.Schema({
       Name: String,
       Bio: String
     },
-  });
+});
   
   let userSchema = mongoose.Schema({
     Username: {type: String, required: true},

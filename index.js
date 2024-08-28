@@ -119,10 +119,12 @@ app.get('/movies/:title', async (req, res) => {
 // GET data about a genre
 app.get('/genres/:name', async (req, res) => {
   try {
-    // Assuming you need to get all movies with this genre
-    const movies = await Movie.find({ genre: req.params.name });
-    if (!movies.length) return res.status(404).send('Genre not found');
-    res.status(200).json({ genre: req.params.name, movies });
+    const movies = await Movie.find({ 'Genre.Name': req.params.name });
+    if (movies.length === 0) return res.status(404).send('Genre not found');
+    res.status(200).json(movies.map(movie => ({
+      Genre: movie.Genre,
+      Description: movie.Description
+    })));
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
   }
@@ -131,37 +133,50 @@ app.get('/genres/:name', async (req, res) => {
 // GET data about a director
 app.get('/directors/:name', async (req, res) => {
   try {
-    // Assuming you need to get all movies by this director
-    const movies = await Movie.find({ director: req.params.name });
-    if (!movies.length) return res.status(404).send('Director not found');
-    res.status(200).json({ director: req.params.name, movies });
+    const movies = await Movie.find({ 'Director.Name': req.params.name });
+    if (movies.length === 0) return res.status(404).send('Director not found');
+    res.status(200).json({
+      Name: movies[0].Director.Name,
+      Bio: movies[0].Director.Bio
+      // Add birth year and death year fields to the schema if needed
+    });
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
   }
 });
 
 // POST a new movie
-app.post('/movies', (req, res) => {
-  const newMovie = {
-    id: uuidv4(),
-    title: req.body.title,
-    director: req.body.director, 
-    genre: req.body.genre,
-    imageUrl: req.body.imageUrl
-};
+app.post('/movies', async (req, res) => {
+  const newMovie = new Movie({
+    Title: req.body.Title,
+    Description: req.body.Description,
+    Genre: {
+      Name: req.body.GenreName,
+      Description: req.body.GenreDescription
+    },
+    Director: {
+      Name: req.body.DirectorName,
+      Bio: req.body.DirectorBio
+    }
+  });
 
-  if (!newMovie.title || !newMovie.director) {
-    res.status(400).send('Opps! Missing required fields: title or director');
-  } else {
-    topMovies.push(newMovie);
-    res.status(201).json(newMovie);
+  try {
+    const savedMovie = await newMovie.save();
+    res.status(201).json(savedMovie);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
   }
 });
 
 // POST new Users
 app.post('/users', async (req, res) => {
   try {
-    const newUser = new User(req.body);
+    const newUser = new User({
+      Username: req.body.Username,
+      Password: req.body.Password,
+      Email: req.body.Email,
+      Birthday: req.body.Birthday
+    });
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
   } catch (err) {
@@ -174,7 +189,7 @@ app.post('/users/:id/favorites/:movieId', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $push: { favoriteMovies: req.params.movieId } },
+      { $push: { FavoriteMovies: req.params.movieId } },
       { new: true }
     );
     res.status(200).json(user);
@@ -199,7 +214,7 @@ app.delete('/users/:id/favorites/:movieId', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $pull: { favoriteMovies: req.params.movieId } },
+      { $pull: { FavoriteMovies: req.params.movieId } },
       { new: true }
     );
     res.status(200).json(user);
@@ -223,8 +238,8 @@ app.delete('/users/:id', async (req, res) => {
 app.put('/movies/:title/genre', async (req, res) => {
   try {
     const updatedMovie = await Movie.findOneAndUpdate(
-      { title: req.params.title },
-      { genre: req.body.genre },
+      { Title: req.params.title },
+      { 'Genre.Name': req.body.GenreName, 'Genre.Description': req.body.GenreDescription },
       { new: true }
     );
     if (!updatedMovie) return res.status(404).send('Movie not found');
@@ -238,8 +253,8 @@ app.put('/movies/:title/genre', async (req, res) => {
 app.put('/movies/:title/director', async (req, res) => {
   try {
     const updatedMovie = await Movie.findOneAndUpdate(
-      { title: req.params.title },
-      { director: req.body.director },
+      { Title: req.params.title },
+      { 'Director.Name': req.body.DirectorName, 'Director.Bio': req.body.DirectorBio },
       { new: true }
     );
     if (!updatedMovie) return res.status(404).send('Movie not found');
@@ -252,7 +267,14 @@ app.put('/movies/:title/director', async (req, res) => {
 // PUT users ID
 app.put('/users/:id', async (req, res) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, {
+      $set: {
+        Username: req.body.Username,
+        Password: req.body.Password,
+        Email: req.body.Email,
+        Birthday: req.body.Birthday
+      }
+    }, { new: true });
     res.status(200).json(updatedUser);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
