@@ -135,11 +135,15 @@ app.get('/directors/:name', async (req, res) => {
   try {
     const movies = await Movie.find({ 'Director.Name': req.params.name });
     if (movies.length === 0) return res.status(404).send('Director not found');
-    res.status(200).json({
-      Name: movies[0].Director.Name,
-      Bio: movies[0].Director.Bio
-      // Add birth year and death year fields to the schema if needed
-    });
+
+    const directorData = movies.map(movie => ({
+      title: movie.Title,
+      description: movie.Description,
+      genre: movie.Genre.Name,
+      bio: movie.Director.Bio
+    }));
+
+    res.status(200).json(directorData);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
   }
@@ -187,11 +191,17 @@ app.post('/users', async (req, res) => {
 // POST users favorite movies
 app.post('/users/:id/favorites/:movieId', async (req, res) => {
   try {
+    // Check if movie exists
+    const movie = await Movie.findById(req.params.movieId);
+    if (!movie) return res.status(404).send('Movie not found');
+
+    // Add movie to user's favorites
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { $push: { FavoriteMovies: req.params.movieId } },
       { new: true }
     );
+    if (!user) return res.status(404).send('User not found');
     res.status(200).json(user);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
@@ -217,6 +227,7 @@ app.delete('/users/:id/favorites/:movieId', async (req, res) => {
       { $pull: { FavoriteMovies: req.params.movieId } },
       { new: true }
     );
+    if (!user) return res.status(404).send('User not found');
     res.status(200).json(user);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
@@ -226,7 +237,7 @@ app.delete('/users/:id/favorites/:movieId', async (req, res) => {
 // DELETE Users
 app.delete('/users/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndRemove(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id); // Updated method
     if (!user) return res.status(404).send('User not found');
     res.status(200).send('User was successfully deregistered');
   } catch (err) {
@@ -267,14 +278,19 @@ app.put('/movies/:title/director', async (req, res) => {
 // PUT users ID
 app.put('/users/:id', async (req, res) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, {
-      $set: {
-        Username: req.body.Username,
-        Password: req.body.Password,
-        Email: req.body.Email,
-        Birthday: req.body.Birthday
-      }
-    }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          Username: req.body.Username,
+          Password: req.body.Password,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday
+        }
+      },
+      { new: true }
+    );
+    if (!updatedUser) return res.status(404).send('User not found');
     res.status(200).json(updatedUser);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
@@ -285,4 +301,4 @@ app.listen(8080, () => {
   console.log('Your app is listening on port 8080.');
 });
 
-mongoose.connect('mongodb://localhost:27017/cfDB', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/cfDB');
