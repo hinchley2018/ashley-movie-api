@@ -5,12 +5,16 @@ const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
 const Movie = Models.Movie;
 const User = Models.User;
+let auth = require('./auth')(app);
+const passport = require('passport');
+require('./passport');
 
 const app = express();
 
 app.use(morgan('common'));
 app.use(express.json());
 app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 let topMovies = [
   { 
