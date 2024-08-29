@@ -7,7 +7,7 @@ const passport = require('passport');
 require('./passport');
 const cors = require('cors');
 const { check, validationResult } = require('express-validator');
-
+const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -22,91 +22,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 let auth = require('./auth')(app);
-
-
-
-let topMovies = [
-  { 
-    id: uuidv4(),
-    title: 'Inception', 
-    director: 'Christopher Nolan', 
-    description: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-    genre: 'Sci-Fi', 
-    imageUrl: 'https://placeholder.com/inception.jpg'
-  },
-  { 
-    id: uuidv4(),
-    title: 'Interstellar', 
-    director: 'Christopher Nolan',
-    description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.', 
-    genre: 'Sci-Fi',
-    imageUrl: 'https://placeholder.com/interstellar.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'Pulp Fiction', 
-    director: 'Quentin Tarantino',
-    description: 'The lives of two mob hitmen, a boxer, a gangster, and his wife intertwine in four tales of violence and redemption.',
-    genre: 'Crime', 
-    imageUrl: 'https://placeholder.com/pulp-fiction.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'Django Unchained', 
-    director: 'Quentin Tarantino',
-    description: 'With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.',
-    genre: 'Western',
-    imageUrl: 'https://placeholder.com/django-unchained.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'The Grand Budapest Hotel', 
-    director: 'Wes Anderson',
-    description: 'A writer encounters the owner of an aging high-class hotel, who tells him of his early years serving as a lobby boy in the hotel\'s glorious years under an exceptional concierge.',
-    genre: 'Comedy',
-    imageUrl: 'https://placeholder.com/grand-budapest.jpg'
-  },
-  { 
-    id: uuidv4(),
-    title: 'The Royal Tenenbaums', 
-    director: 'Wes Anderson',
-    description: 'The eccentric members of a dysfunctional family reluctantly gather under the same roof for various reasons.',
-    genre: 'Comedy',
-    imageUrl: 'https://placeholder.com/royal-tenenbaums.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'Fight Club', 
-    director: 'David Fincher',
-    description: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.',
-    genre: 'Drama',
-    imageUrl: 'https://placeholder.com/fight-club.jpg'
-  },
-  { 
-    id: uuidv4(),
-    title: 'Gone Girl',  
-    director: 'David Fincher',
-    description: 'With his wife\'s disappearance having become the focus of an intense media circus, a man sees the spotlight turned on him when it\'s suspected that he may not be innocent.',
-    genre: 'Thriller',
-    imageUrl: 'https://placeholder.com/gone-girl.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'The Godfather', 
-    director: 'Francis Ford Coppola',
-    description: 'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
-    genre: 'Crime',
-    imageUrl: 'https://placeholder.com/the-godfather.jpg' 
-  },
-  { 
-    id: uuidv4(),
-    title: 'Apocalypse Now', 
-    director: 'Francis Ford Coppola',
-    description: 'A U.S. Army officer serving in Vietnam is tasked with assassinating a renegade Special Forces Colonel who sees himself as a god.',
-    genre: 'War',
-    imageUrl: 'https://placeholder.com/apocalypse-now.jpg' 
-  },
-];
 
 // GET all movies
 app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -187,60 +102,54 @@ app.post('/movies', passport.authenticate('jwt', { session: false }), async (req
 
 // POST new Users
 app.post('/users',
-  // Validation logic here for request
-  //you can either use a chain of methods like .not().isEmpty()
-  //which means "opposite of isEmpty" in plain english "is not empty"
-  //or use .isLength({min: 5}) which means
-  //minimum value of 5 characters are only allowed
   [
-    check('Username', 'Username is required').isLength({min: 5}),
+    check('Username', 'Username is required').isLength({ min: 5 }),
     check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
     check('Password', 'Password is required').not().isEmpty(),
     check('Email', 'Email does not appear to be valid').isEmail()
   ], async (req, res) => {
 
-  // check the validation object for errors
-    let errors = validationResult(req);
+  const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
 
-    let hashedPassword = Users.hashPassword(req.body.Password);
-    await Users.findOne({ Username: req.body.Username }) // Search to see if a user with the requested username already exists
-      .then((user) => {
-        if (user) {
-          //If the user is found, send a response that it already exists
-          return res.status(400).send(req.body.Username + ' already exists');
-        } else {
-          Users
-            .create({
-              Username: req.body.Username,
-              Password: hashedPassword,
-              Email: req.body.Email,
-              Birthday: req.body.Birthday
-            })
-            .then((user) => { res.status(201).json(user) })
-            .catch((error) => {
-              console.error(error);
-              res.status(500).send('Error: ' + error);
-            });
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error: ' + error);
-      });
-  });
+  // Hash the password
+  let hashedPassword = await bcrypt.hash(req.body.Password, 10);
+
+  // Check if the username already exists
+  await User.findOne({ Username: req.body.Username })
+    .then((user) => {
+      if (user) {
+        return res.status(400).send(req.body.Username + ' already exists');
+      } else {
+        // Create the new user
+        User.create({
+          Username: req.body.Username,
+          Password: hashedPassword,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday
+        })
+        .then((user) => { res.status(201).json(user) })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).send('Error: ' + error);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error: ' + error);
+    });
+});
 
 // POST users favorite movies
 app.post('/users/:id/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
-    // Check if movie exists
     const movie = await Movie.findById(req.params.movieId);
     if (!movie) return res.status(404).send('Movie not found');
 
-    // Add movie to user's favorites
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { $push: { FavoriteMovies: req.params.movieId } },
@@ -282,7 +191,7 @@ app.delete('/users/:id/favorites/:movieId', passport.authenticate('jwt', { sessi
 // DELETE Users
 app.delete('/users/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id); // Updated method
+    const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).send('User not found');
     res.status(200).send('User was successfully deregistered');
   } catch (err) {
@@ -342,33 +251,10 @@ app.put('/users/:id', passport.authenticate('jwt', { session: false }), async (r
   }
 });
 
-app.put('/users/:Username', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  // CONDITION TO CHECK ADDED HERE
-  if(req.user.Username !== req.params.Username){
-      return res.status(400).send('Permission denied');
-  }
-  // CONDITION ENDS
-  await Users.findOneAndUpdate({ Username: req.params.Username }, {
-      $set:
-      {
-          Username: req.body.Username,
-          Password: req.body.Password,
-          Email: req.body.Email,
-          Birthday: req.body.Birthday
-      }
-  },
-      { new: true }) // This line makes sure that the updated document is returned
-      .then((updatedUser) => {
-          res.json(updatedUser);
-      })
-      .catch((err) => {
-          console.log(err);
-          res.status(500).send('Error: ' + err);
-      })
-});
-
+// Start the server
 app.listen(8080, () => {
   console.log('Your app is listening on port 8080.');
 });
 
+// Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/cfDB');
