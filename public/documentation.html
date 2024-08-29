@@ -26,15 +26,18 @@
         h1, h2, h3 {
             color: #333;
         }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
     <h1>Movie API Documentation</h1>
 
-    <p>Welcome to the documentation for the Movie API. 
-       This API serves as the server-side component of the “movies” web application, providing users with access to information about various movies, directors, and genres. 
-       Users can sign up, update their personal information, and manage a list of their favorite movies. 
-       This API is built using Node.js, Express, MongoDB, and follows REST architecture principles.</p>
+    <p>Welcome to the documentation for the Movie API. This API serves as the server-side component of the “movies” web application, providing users with access to information about various movies, directors, and genres. Users can sign up, update their personal information, and manage a list of their favorite movies. This API is built using Node.js, Express, MongoDB, and follows REST architecture principles.</p>
 
     <h2>API Overview</h2>
     <p>The Movie API is a RESTful service that provides a set of endpoints to interact with movie data stored in a MongoDB database. It enables users to perform CRUD (Create, Read, Update, Delete) operations on movies, genres, directors, and user information.</p>
@@ -61,7 +64,23 @@
                 <td>GET</td>
                 <td>None</td>
                 <td>None</td>
-                <td>JSON array of movie objects</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>Movie.find()</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+[
+  {
+    "_id": "60a73c424e04b7f888a3bda1",
+    "Title": "Inception",
+    "Description": "A thief who steals corporate secrets...",
+    "Genre": { "Name": "Sci-Fi", "Description": "Science Fiction" },
+    "Director": { "Name": "Christopher Nolan", "Bio": "..." },
+    "ImageUrl": "https://placeholder.com/inception.jpg"
+  },
+  // more movies...
+]
+                    </pre>
+                </td>
             </tr>
             <!-- Get Movie by Title -->
             <tr>
@@ -71,7 +90,20 @@
                 <td>GET</td>
                 <td>title (URL parameter)</td>
                 <td>None</td>
-                <td>JSON object with movie details (title, description, genre, director, image URL, etc.)</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>Movie.findOne({ Title: req.params.title })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "_id": "60a73c424e04b7f888a3bda1",
+  "Title": "Inception",
+  "Description": "A thief who steals corporate secrets...",
+  "Genre": { "Name": "Sci-Fi", "Description": "Science Fiction" },
+  "Director": { "Name": "Christopher Nolan", "Bio": "..." },
+  "ImageUrl": "https://placeholder.com/inception.jpg"
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Get Genre by Name -->
             <tr>
@@ -81,7 +113,19 @@
                 <td>GET</td>
                 <td>name (URL parameter)</td>
                 <td>None</td>
-                <td>JSON object with genre details (name, description)</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>Movie.find({ 'Genre.Name': req.params.name })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "Genre": {
+    "Name": "Sci-Fi",
+    "Description": "Science Fiction"
+  },
+  "Description": "A genre that uses speculative, fictional science-based depictions of phenomena that are not fully accepted by mainstream science..."
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Get Director by Name -->
             <tr>
@@ -91,7 +135,18 @@
                 <td>GET</td>
                 <td>name (URL parameter)</td>
                 <td>None</td>
-                <td>JSON object with director details (name, bio, birth year, death year)</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>Movie.find({ 'Director.Name': req.params.name })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "title": "Inception",
+  "description": "A thief who steals corporate secrets...",
+  "genre": "Sci-Fi",
+  "bio": "Christopher Nolan is a British-American film director, producer, and screenwriter. He is known for his Hollywood blockbusters with complex storytelling, such as Inception, The Dark Knight Trilogy, and Interstellar."
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Register User -->
             <tr>
@@ -100,8 +155,30 @@
                 <td>Allows a new user to register.</td>
                 <td>POST</td>
                 <td>None</td>
-                <td>JSON object with user data (username, password, email, dateOfBirth)</td>
-                <td>Confirmation message or error message</td>
+                <td>
+                    JSON object with user data (username, password, email, dateOfBirth)
+                    <pre>
+{
+  "Username": "newUser123",
+  "Password": "password123",
+  "Email": "newuser@example.com",
+  "Birthday": "1990-01-01"
+}
+                    </pre>
+                </td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>new User(req.body).save()</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "_id": "60a73c424e04b7f888a3bda1",
+  "Username": "newUser123",
+  "Email": "newuser@example.com",
+  "Birthday": "1990-01-01",
+  "FavoriteMovies": []
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Update User -->
             <tr>
@@ -110,8 +187,30 @@
                 <td>Allows a user to update their personal information.</td>
                 <td>PUT</td>
                 <td>username (URL parameter)</td>
-                <td>JSON object with updated user data (username, password, email, dateOfBirth)</td>
-                <td>Updated user data or confirmation message</td>
+                <td>
+                    JSON object with updated user data (username, password, email, dateOfBirth)
+                    <pre>
+{
+  "Username": "newUser123",
+  "Password": "newpassword123",
+  "Email": "newemail@example.com",
+  "Birthday": "1990-01-01"
+}
+                    </pre>
+                </td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>User.findOneAndUpdate({ Username: req.params.username }, { $set: req.body }, { new: true })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "_id": "60a73c424e04b7f888a3bda1",
+  "Username": "newUser123",
+  "Email": "newemail@example.com",
+  "Birthday": "1990-01-01",
+  "FavoriteMovies": []
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Add Movie to Favorites -->
             <tr>
@@ -120,8 +219,25 @@
                 <td>Add a movie to a user's list of favorites.</td>
                 <td>POST</td>
                 <td>username (URL parameter)</td>
-                <td>JSON object with movie title</td>
-                <td>Updated list of favorite movies or confirmation message</td>
+                <td>
+                    JSON object with movie title
+                    <pre>
+{
+  "Title": "Inception"
+}
+                    </pre>
+                </td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>User.findOneAndUpdate({ Username: req.params.username }, { $push: { FavoriteMovies: req.body.Title } }, { new: true })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "_id": "60a73c424e04b7f888a3bda1",
+  "Username": "newUser123",
+  "FavoriteMovies": ["Inception", "Interstellar"]
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Remove Movie from Favorites -->
             <tr>
@@ -131,7 +247,17 @@
                 <td>DELETE</td>
                 <td>username (URL parameter), movieTitle (URL parameter)</td>
                 <td>None</td>
-                <td>Updated list of favorite movies or confirmation message</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>User.findOneAndUpdate({ Username: req.params.username }, { $pull: { FavoriteMovies: req.params.movieTitle } }, { new: true })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "_id": "60a73c424e04b7f888a3bda1",
+  "Username": "newUser123",
+  "FavoriteMovies": ["Interstellar"]
+}
+                    </pre>
+                </td>
             </tr>
             <!-- Deregister User -->
             <tr>
@@ -141,9 +267,17 @@
                 <td>DELETE</td>
                 <td>username (URL parameter)</td>
                 <td>None</td>
-                <td>Confirmation message or error message</td>
+                <td>
+                    <strong>Mongoose Logic:</strong> <code>User.findOneAndRemove({ Username: req.params.username })</code><br>
+                    <strong>Response Example:</strong>
+                    <pre>
+{
+  "message": "User newUser123 has been deregistered."
+}
+                    </pre>
+                </td>
             </tr>
         </tbody>
     </table>
-  </body>
+</body>
 </html>
