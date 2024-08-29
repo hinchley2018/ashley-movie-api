@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
 const passport = require('passport');
 require('./passport');
+const cors = require('cors');
+
 
 const app = express();
 
@@ -16,6 +18,7 @@ app.use(express.json());
 app.use(express.static('public'));
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 
 let auth = require('./auth')(app);
 
