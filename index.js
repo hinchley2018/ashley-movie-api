@@ -3,18 +3,23 @@ const Models = require('./models.js');
 const express = require('express');
 const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
-const Movie = Models.Movie;
-const User = Models.User;
-let auth = require('./auth')(app);
 const passport = require('passport');
 require('./passport');
 
 const app = express();
 
+const Movie = Models.Movie;
+const User = Models.User;
+
 app.use(morgan('common'));
 app.use(express.json());
 app.use(express.static('public'));
+const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
+
+let auth = require('./auth')(app);
+
+
 
 let topMovies = [
   { 
@@ -100,7 +105,7 @@ let topMovies = [
 ];
 
 // GET all movies
-app.get('/movies', async (req, res) => {
+app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const movies = await Movie.find();
     res.status(200).json(movies);
@@ -110,7 +115,7 @@ app.get('/movies', async (req, res) => {
 });
 
 // GET data about a single movie by title
-app.get('/movies/:title', async (req, res) => {
+app.get('/movies/:title', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const movie = await Movie.findOne({ title: req.params.title });
     if (!movie) return res.status(404).send('Movie not found');
@@ -121,7 +126,7 @@ app.get('/movies/:title', async (req, res) => {
 });
 
 // GET data about a genre
-app.get('/genres/:name', async (req, res) => {
+app.get('/genres/:name', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const movies = await Movie.find({ 'Genre.Name': req.params.name });
     if (movies.length === 0) return res.status(404).send('Genre not found');
@@ -135,7 +140,7 @@ app.get('/genres/:name', async (req, res) => {
 });
 
 // GET data about a director
-app.get('/directors/:name', async (req, res) => {
+app.get('/directors/:name', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const movies = await Movie.find({ 'Director.Name': req.params.name });
     if (movies.length === 0) return res.status(404).send('Director not found');
@@ -154,7 +159,7 @@ app.get('/directors/:name', async (req, res) => {
 });
 
 // POST a new movie
-app.post('/movies', async (req, res) => {
+app.post('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const newMovie = new Movie({
     Title: req.body.Title,
     Description: req.body.Description,
@@ -193,7 +198,7 @@ app.post('/users', async (req, res) => {
 });
 
 // POST users favorite movies
-app.post('/users/:id/favorites/:movieId', async (req, res) => {
+app.post('/users/:id/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     // Check if movie exists
     const movie = await Movie.findById(req.params.movieId);
@@ -213,7 +218,7 @@ app.post('/users/:id/favorites/:movieId', async (req, res) => {
 });
 
 // DELETE a movie by title
-app.delete('/movies/:title', async (req, res) => {
+app.delete('/movies/:title', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const deletedMovie = await Movie.findOneAndRemove({ title: req.params.title });
     if (!deletedMovie) return res.status(404).send('Movie not found');
@@ -224,7 +229,7 @@ app.delete('/movies/:title', async (req, res) => {
 });
 
 // DELETE favorite movie
-app.delete('/users/:id/favorites/:movieId', async (req, res) => {
+app.delete('/users/:id/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
@@ -239,7 +244,7 @@ app.delete('/users/:id/favorites/:movieId', async (req, res) => {
 });
 
 // DELETE Users
-app.delete('/users/:id', async (req, res) => {
+app.delete('/users/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id); // Updated method
     if (!user) return res.status(404).send('User not found');
@@ -250,7 +255,7 @@ app.delete('/users/:id', async (req, res) => {
 });
 
 // PUT (Update) the genre of a movie by title
-app.put('/movies/:title/genre', async (req, res) => {
+app.put('/movies/:title/genre', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const updatedMovie = await Movie.findOneAndUpdate(
       { Title: req.params.title },
@@ -265,7 +270,7 @@ app.put('/movies/:title/genre', async (req, res) => {
 });
 
 // PUT (Update) the director of a movie by title
-app.put('/movies/:title/director', async (req, res) => {
+app.put('/movies/:title/director', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const updatedMovie = await Movie.findOneAndUpdate(
       { Title: req.params.title },
@@ -280,7 +285,7 @@ app.put('/movies/:title/director', async (req, res) => {
 });
 
 // PUT users ID
-app.put('/users/:id', async (req, res) => {
+app.put('/users/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
@@ -299,6 +304,31 @@ app.put('/users/:id', async (req, res) => {
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
   }
+});
+
+app.put('/users/:Username', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  // CONDITION TO CHECK ADDED HERE
+  if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+  }
+  // CONDITION ENDS
+  await Users.findOneAndUpdate({ Username: req.params.Username }, {
+      $set:
+      {
+          Username: req.body.Username,
+          Password: req.body.Password,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday
+      }
+  },
+      { new: true }) // This line makes sure that the updated document is returned
+      .then((updatedUser) => {
+          res.json(updatedUser);
+      })
+      .catch((err) => {
+          console.log(err);
+          res.status(500).send('Error: ' + err);
+      })
 });
 
 app.listen(8080, () => {
