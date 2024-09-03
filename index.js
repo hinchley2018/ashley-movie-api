@@ -103,39 +103,36 @@ app.post('/movies', passport.authenticate('jwt', { session: false }), async (req
 // POST new Users
 app.post('/users',
   [
-    check('Username', 'Username is required').isLength({ min: 5 }),
-    check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('Username', 'Username is required').isLength({min: 5}),
+    check('Username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
     check('Password', 'Password is required').not().isEmpty(),
     check('Email', 'Email does not appear to be valid').isEmail()
   ], async (req, res) => {
 
-  const errors = validationResult(req);
+  let errors = validationResult(req);
 
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }
 
-  // Hash the password
-  let hashedPassword = await bcrypt.hash(req.body.Password, 10);
-
-  // Check if the username already exists
+  let hashedPassword = User.hashPassword(req.body.Password);
   await User.findOne({ Username: req.body.Username })
     .then((user) => {
       if (user) {
         return res.status(400).send(req.body.Username + ' already exists');
       } else {
-        // Create the new user
-        User.create({
-          Username: req.body.Username,
-          Password: hashedPassword,
-          Email: req.body.Email,
-          Birthday: req.body.Birthday
-        })
-        .then((user) => { res.status(201).json(user) })
-        .catch((error) => {
-          console.error(error);
-          res.status(500).send('Error: ' + error);
-        });
+        User
+          .create({
+            Username: req.body.Username,
+            Password: hashedPassword,
+            Email: req.body.Email,
+            Birthday: req.body.Birthday
+          })
+          .then((user) => { res.status(201).json(user) })
+          .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error: ' + error);
+          });
       }
     })
     .catch((error) => {
@@ -230,25 +227,30 @@ app.put('/movies/:title/director', passport.authenticate('jwt', { session: false
 });
 
 // PUT users ID
-app.put('/users/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          Username: req.body.Username,
-          Password: req.body.Password,
-          Email: req.body.Email,
-          Birthday: req.body.Birthday
-        }
-      },
-      { new: true }
-    );
-    if (!updatedUser) return res.status(404).send('User not found');
-    res.status(200).json(updatedUser);
-  } catch (err) {
-    res.status(500).send('Error: ' + err.message);
+app.put('/users/:id',
+  [
+    check('Username', 'Username is required').isLength({min: 5}),
+    check('Username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('Email', 'Email does not appear to be valid').isEmail()
+  ], async (req, res) => {
+
+  let errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
   }
+
+  // Proceed with updating the user if validation passes
+  await User.findByIdAndUpdate(req.params.id, {
+    $set: {
+      Username: req.body.Username,
+      Password: User.hashPassword(req.body.Password),  // Hash the new password
+      Email: req.body.Email,
+      Birthday: req.body.Birthday
+    }
+  }, { new: true })
+  .then((updatedUser) => res.status(200).json(updatedUser))
+  .catch((error) => res.status(500).send('Error: ' + error));
 });
 
 // Start the server
