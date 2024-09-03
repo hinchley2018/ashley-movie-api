@@ -7,7 +7,7 @@ const passport = require('passport');
 require('./passport');
 const cors = require('cors');
 const { check, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 
