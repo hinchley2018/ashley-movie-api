@@ -260,4 +260,4 @@ app.listen(port, '0.0.0.0',() => {
 });
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/cfDB');
+mongoose.connect( process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
