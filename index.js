@@ -77,6 +77,10 @@ app.get('/directors/:name', passport.authenticate('jwt', { session: false }), as
   }
 });
 
+app.get('/', (req, res) => {
+  res.send('Welcome to the MyFlix API');
+});
+
 // POST a new movie
 app.post('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const newMovie = new Movie({
@@ -260,4 +264,6 @@ app.listen(port, '0.0.0.0',() => {
 });
 
 // Connect to MongoDB
-mongoose.connect( process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.CONNECTION_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Error connecting to MongoDB:', err));
