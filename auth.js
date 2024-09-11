@@ -1,39 +1,39 @@
-const jwtSecret = 'your_jwt_secret'; // This has to be the same key used in the JWTStrategy
-const jwt = require('jsonwebtoken'),
-  passport = require('passport');
+// JWT Secret for signing the token
+const jwtSecret = 'your_jwt_secret'; 
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
 
-require('./passport'); // Your local passport file
-
-
+// Function to generate a JWT token
 let generateJWTToken = (user) => {
   return jwt.sign(user, jwtSecret, {
-    subject: user.Username, // This is the username you’re encoding in the JWT
-    expiresIn: '7d', // This specifies that the token will expire in 7 days
-    algorithm: 'HS256' // This is the algorithm used to “sign” or encode the values of the JWT
+    subject: user.Username, // The username being encoded in the JWT
+    expiresIn: '7d', // Token will expire in 7 days
+    algorithm: 'HS256' // The algorithm used to sign the token
   });
-}
+};
 
-
-/* POST login. */
-app.post('/login', (req, res) => {
-  passport.authenticate('local', { session: false }, (err, user, info) => {
-    if (err || !user) {
-      return res.status(400).json({
-        message: 'Something went wrong',
-        user: user
-      });
-    }
-
-    req.login(user, { session: false }, (err) => {
-      if (err) {
-        res.send(err);
+/* POST login */
+module.exports = (router) => {
+  router.post('/login', (req, res) => {
+    passport.authenticate('local', { session: false }, (error, user, info) => {
+      if (error || !user) {
+        return res.status(400).json({
+          message: 'Something is not right',
+          user: user
+        });
       }
 
-      // Generate JWT Token
-      const token = jwt.sign(user.toJSON(), process.env.SECRET_KEY, {
-        expiresIn: '7d',
+      req.login(user, { session: false }, (error) => {
+        if (error) {
+          return res.status(500).send(error);
+        }
+
+        // Generate JWT Token
+        let token = generateJWTToken(user.toJSON());
+        
+        // Send the user and token as a response
+        return res.json({ user, token });
       });
-      return res.json({ user, token });
-    });
-  })(req, res);
-});
+    })(req, res); // Make sure this is outside the callback
+  });
+};

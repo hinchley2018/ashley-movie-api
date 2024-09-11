@@ -3,56 +3,68 @@ const passport = require('passport'),
   Models = require('./models.js'),
   passportJWT = require('passport-jwt');
 
-let Users = Models.User,
+const Users = Models.User,
   JWTStrategy = passportJWT.Strategy,
   ExtractJWT = passportJWT.ExtractJwt;
 
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: 'Username',
-        passwordField: 'Password',
-      },
-      async (username, password, callback) => {
+// Local strategy for username/password authentication
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: 'Username',
+      passwordField: 'Password',
+    },
+    async (username, password, callback) => {
+      try {
         console.log(`${username} ${password}`);
-        await Users.findOne({ Username: username })
+
+        const user = await Users.findOne({ Username: username });
+        if (!user) {
+          console.log('incorrect username');
+          return callback(null, false, {
+            message: 'Incorrect username or password.',
+          });
+        }
+
+        // Validate password
+        if (!user.validatePassword(password)) {
+          console.log('incorrect password');
+          return callback(null, false, { message: 'Incorrect password.' });
+        }
+
+        console.log('finished');
+        return callback(null, user); // Successful authentication
+      } catch (error) {
+        console.log(error);
+        return callback(error);
+      }
+    }
+  )
+);
+
+// JWT strategy for protected routes authentication
+passport.use(
+  new JWTStrategy(
+    {
+      jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+      secretOrKey: 'your_jwt_secret',  // Make sure this matches the secret set in Heroku
+    },
+    (jwtPayload, callback) => {
+      console.log('JWT Payload:', jwtPayload); // Add this to log the JWT payload
+      Users.findById(jwtPayload._id)
         .then((user) => {
-          if (!user) {
-            console.log('incorrect username');
-            return callback(null, false, {
-              message: 'Incorrect username or password.',
-            });
+          if (user) {
+            console.log('User found:', user); // Add this to log the found user
+            return callback(null, user);
+          } else {
+            console.log('User not found'); // Add this if no user is found
+            return callback(null, false);
           }
-          if (!user.validatePassword(password)) {
-            console.log('incorrect password');
-            return callback(null, false, { message: 'Incorrect password.' });
-          }
-          console.log('finished');
-          return callback(null, user);
         })
         .catch((error) => {
-          console.log(error);
+          console.error('Error finding user:', error); // Add this for errors
           return callback(error);
         });
-      }
-    )
-  );
-
-
-  passport.use(
-    new JWTStrategy(
-      {
-        jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-        secretOrKey: 'your_jwt_secret'  // Replace with your actual secret
-      },
-      (jwtPayload, callback) => {
-        return Users.findById(jwtPayload._id)
-          .then((user) => {
-            return callback(null, user);
-          })
-          .catch((error) => {
-            return callback(error);
-          });
-      }
-    )
-  );
+    }
+  )
+);
