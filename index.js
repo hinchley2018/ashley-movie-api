@@ -1,22 +1,20 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const mongoose = require('mongoose');
 const express = require('express');
 const morgan = require('morgan');
-const { v4: uuidv4 } = require('uuid');
 const passport = require('passport');
 require('./passport');
 const cors = require('cors');
 const { check, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
-const movieRoutes = require('./routes.movieRoutes.js');
-const userRoutes = require('./routes.userRoutes.js');
+const movieRoutes = require('./routes/movieRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
 
 const app = express();
 
-const Models = require('./models');  // Import both Movie and User models
-const Movie = Models.Movie;
-const User = Models.User;
+// Import models separately
+const Movie = require('./models/movieModel');
+const User = require('./models/userModel');
 
 app.use(morgan('common'));
 app.use(express.json());
@@ -24,8 +22,8 @@ app.use(express.static('public'));
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
-app.use('/movies', movieRoutes)
-app.use('/users', userRoutes)
+app.use('/movies', movieRoutes);
+app.use('/users', userRoutes);
 
 let auth = require('./auth')(app);
 
@@ -68,14 +66,11 @@ app.get('/', (req, res) => {
 
 // Start the server
 const port = process.env.PORT || 8080;
-app.listen(port, '0.0.0.0',() => {
- console.log('Listening on Port http://localhost:' + port);
+app.listen(port, '0.0.0.0', () => {
+  console.log('Listening on Port http://localhost:' + port);
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.CONNECTION_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.CONNECTION_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Error connecting to MongoDB:', err));
