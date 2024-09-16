@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const { check, validationResult } = require('express-validator');
-const movie = require('../models/userModel.js');
+const User = require('../models/userModel.js');
+const Movie = require('../models/movieModel.js');
 
 // POST new Users
 router.post('/',
