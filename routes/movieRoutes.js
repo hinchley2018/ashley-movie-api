@@ -6,7 +6,7 @@ const User = require('../models/userModel.js');
 const Movie = require('../models/movieModel.js');
 
 // GET all movies
-router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/', async (req, res) => {
     try {
       const movies = await Movie.find();
       res.status(200).json(movies);
